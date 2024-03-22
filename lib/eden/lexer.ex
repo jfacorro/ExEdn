@@ -382,7 +382,7 @@ defmodule Eden.Lexer do
 
   defp digit?(char), do: String.match?(char, ~r/[0-9]/)
 
-  defp symbol_char?(char), do: String.match?(char, ~r/[_?a-zA-Z0-9.*+!\-$%&=<>\#:]/)
+  defp symbol_char?(char), do: String.match?(char, ~r/[_?a-zA-Z0-9.*+!\-$%&=<>\#:|]/)
 
   defp whitespace?(char), do: String.match?(char, ~r/[\s,]/)
 

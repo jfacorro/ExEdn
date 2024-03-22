@@ -9,7 +9,7 @@ defmodule Eden.LexerTest do
     assert tokenize(" \n \t, \r") == []
 
     assert_raise Ex.UnexpectedInputError, fn ->
-      tokenize(" \n \t, \r a| ,,,")
+      tokenize(" \n \t, \r / ,,,")
     end
   end
 
@@ -55,6 +55,7 @@ defmodule Eden.LexerTest do
     assert tokenize(" :question? ") == [token(:keyword, "question?")]
     assert tokenize(":question?{") == [token(:keyword, "question?"), token(:curly_open, "{")]
     assert tokenize(":k?+._-!7><$&=*") == [token(:keyword, "k?+._-!7><$&=*")]
+    assert tokenize(":a-1|2") == [token(:keyword, "a-1|2")]
 
     assert_raise Ex.UnexpectedInputError, fn ->
       tokenize(" :question?\\")
@@ -68,6 +69,7 @@ defmodule Eden.LexerTest do
     assert tokenize("question?{") == [token(:symbol, "question?"), token(:curly_open, "{")]
     assert tokenize("k?+._-!7><$&=*") == [token(:symbol, "k?+._-!7><$&=*")]
     assert tokenize("ns/name") == [token(:symbol, "ns/name")]
+    assert tokenize("a-1|2") == [token(:symbol, "a-1|2")]
 
     assert_raise Ex.UnexpectedInputError, fn ->
       tokenize(" question?\\")

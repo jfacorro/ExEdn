@@ -32,6 +32,7 @@ defmodule EdenTest do
 
     assert decode!("a-symbol") == %Symbol{name: "a-symbol"}
     assert decode!(":the-keyword") == :"the-keyword"
+    assert decode!(":ns/the-keyword") == :"ns/the-keyword"
 
     assert decode!("42") == 42
     assert decode!("42N") == 42
@@ -60,6 +61,10 @@ defmodule EdenTest do
     assert_raise Ex.OddExpressionCountError, fn ->
       decode!("{:name \"John\" :age}")
     end
+  end
+
+  test "Decode Namespaced Map" do
+    assert decode!("#:ns{:foo 1, :bar/zoo 2 :_/baz 3}") == %{"ns/foo": 1, "bar/zoo": 2, baz: 3}
   end
 
   test "Decode Set" do

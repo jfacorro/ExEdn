@@ -85,6 +85,7 @@ defmodule Eden.Parser do
       terminal(state, :string) ||
       terminal(state, :character) ||
       map_begin(state) ||
+      ns_map_begin(state) ||
       vector_begin(state) ||
       list_begin(state) ||
       set_begin(state) ||
@@ -143,6 +144,25 @@ defmodule Eden.Parser do
     end
 
     state
+  end
+
+  defp ns_map_begin(state) do
+    {state, token} = pop_token(state)
+
+    if token?(token, :ns_map) do
+      node = new_node(:ns_map, token, true)
+      {state, token} = pop_token(state)
+
+      if not token?(token, :curly_open) do
+        raise Ex.UnexpectedTokenError, token
+      end
+
+      state
+      |> set_node(node)
+      |> pairs
+      |> map_end
+      |> restore_node(state)
+    end
   end
 
   ## Vector

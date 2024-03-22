@@ -87,6 +87,17 @@ defmodule Eden.Decode do
     |> Enum.into(%{})
   end
 
+  def decode(%Node{type: :ns_map, value: value, children: children} = node, opts) do
+    if Integer.is_odd(length(children)) do
+      raise Ex.OddExpressionCountError, node
+    end
+
+    children
+    |> Enum.chunk_every(2)
+    |> Enum.map(fn [a, b] -> {decode_ns_map_key(a, value, opts), decode(b, opts)} end)
+    |> Enum.into(%{})
+  end
+
   def decode(%Node{type: :set, children: children}, opts) do
     children
     |> decode(opts)
@@ -105,5 +116,23 @@ defmodule Eden.Decode do
 
   def decode(%Node{type: type}, _opts) do
     raise "Unrecognized node type: #{inspect(type)}"
+  end
+
+  defp decode_ns_map_key(%Node{type: :keyword, value: value}, ns, _opts) do
+    if not String.contains?(value, "/") do
+      (ns <> "/" <> value) |> String.to_atom()
+    else
+      case value do
+        "_/" <> kw ->
+          kw |> String.to_atom()
+
+        _ ->
+          value |> String.to_atom()
+      end
+    end
+  end
+
+  defp decode_ns_map_key(node, _ns, opts) do
+    decode(node, opts)
   end
 end

@@ -229,6 +229,12 @@ defmodule Eden.Lexer do
     end_token(state, token, "#_", rest)
   end
 
+  # NS Maps
+  defp _tokenize(state = %{state: :new}, <<"#:"::utf8, rest::binary>>) do
+    token = token(:ns_map, "")
+    start_token(state, :symbol, token, "#", rest)
+  end
+
   # Tags
   defp _tokenize(state = %{state: :new}, <<"#"::utf8, rest::binary>>) do
     token = token(:tag, "")

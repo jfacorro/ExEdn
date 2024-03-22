@@ -104,7 +104,7 @@ defmodule EdenTest do
     assert encode!(42) == "42"
 
     assert encode!(42.0) == "42.0"
-    assert encode!(42.0e3) == "4.2e4"
+    assert encode!(42.0e3) == "42000.0"
     assert encode!(42.0e-3) == "0.042"
     assert encode!(42.0e-1) == "4.2"
     assert encode!(42.01e+1) == "420.1"
@@ -121,12 +121,14 @@ defmodule EdenTest do
 
   test "Encode Map" do
     map = %{name: "John", age: 42}
-    assert encode!(map) == "{:age 42, :name \"John\"}"
+    assert encode!(map) == "{:name \"John\", :age 42}"
   end
 
   test "Encode Set" do
-    set = Enum.into([:name, "John", :age, 42], MapSet.new())
-    assert encode!(set) == "#\{42, :age, :name, \"John\"}"
+    assert encode!(MapSet.new([:name])) == "#\{:name}"
+
+    set = MapSet.new([:name, "John", :age, 42])
+    assert encode!(set) |> decode!() == set
   end
 
   test "Encode Tag" do

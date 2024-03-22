@@ -33,6 +33,8 @@ defmodule EdenTest do
     assert decode!("a-symbol") == %Symbol{name: "a-symbol"}
     assert decode!(":the-keyword") == :"the-keyword"
     assert decode!(":ns/the-keyword") == :"ns/the-keyword"
+    assert decode!(":true") == {:keyword, true}
+    assert decode!(":nil") == {:keyword, nil}
 
     assert decode!("42") == 42
     assert decode!("42N") == 42
@@ -100,6 +102,8 @@ defmodule EdenTest do
 
     assert encode!(Symbol.new("a-symbol")) == "a-symbol"
     assert encode!(:"the-keyword") == ":the-keyword"
+
+    assert encode!({:keyword, true}) == ":true"
 
     assert encode!(42) == "42"
 

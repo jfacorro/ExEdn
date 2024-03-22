@@ -28,6 +28,12 @@ defimpl Encode, for: Atom do
   end
 end
 
+defimpl Encode, for: Tuple do
+  def encode({:keyword, atom}) when atom in [nil, true, false] do
+    ":" <> Atom.to_string(atom)
+  end
+end
+
 defimpl Encode, for: Symbol do
   def encode(symbol) do
     symbol.name

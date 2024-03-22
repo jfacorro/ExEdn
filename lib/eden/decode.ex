@@ -38,6 +38,10 @@ defmodule Eden.Decode do
     %Symbol{name: value}
   end
 
+  def decode(%Node{type: :keyword, value: value}, _opts) when value in ["nil", "true", "false"] do
+    {:keyword, String.to_atom(value)}
+  end
+
   def decode(%Node{type: :keyword, value: value}, _opts) do
     String.to_atom(value)
   end

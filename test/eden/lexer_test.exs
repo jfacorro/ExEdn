@@ -14,29 +14,31 @@ defmodule Eden.LexerTest do
   end
 
   test "nil, true, false" do
-    assert tokenize("nil") == [token(:nil, "nil")]
-    assert tokenize(" nil ") == [token(:nil, "nil")]
-    assert tokenize("true") == [token(:true, "true")]
-    assert tokenize(" true ") == [token(:true, "true")]
-    assert tokenize("false") == [token(:false, "false")]
-    assert tokenize(" false ") == [token(:false, "false")]
+    assert tokenize("nil") == [token(nil, "nil")]
+    assert tokenize(" nil ") == [token(nil, "nil")]
+    assert tokenize("true") == [token(true, "true")]
+    assert tokenize(" true ") == [token(true, "true")]
+    assert tokenize("false") == [token(false, "false")]
+    assert tokenize(" false ") == [token(false, "false")]
 
-    assert List.first(tokenize(" nil{ ")) == token(:nil, "nil")
+    assert List.first(tokenize(" nil{ ")) == token(nil, "nil")
     assert List.first(tokenize(" nilo ")) == token(:symbol, "nilo")
 
-    assert List.first(tokenize(" true} ")) == token(:true, "true")
+    assert List.first(tokenize(" true} ")) == token(true, "true")
     assert List.first(tokenize(" truedetective ")) == token(:symbol, "truedetective")
 
-    assert List.first(tokenize(" false{ ")) == token(:false, "false")
+    assert List.first(tokenize(" false{ ")) == token(false, "false")
     assert List.first(tokenize(" falsette ")) == token(:symbol, "falsette")
   end
 
   test "String" do
     assert tokenize(" \"this is a string\" ") == [token(:string, "this is a string")]
     assert tokenize(" \"this is a \\\" string\" ") == [token(:string, "this is a \" string")]
+
     assert_raise Ex.UnfinishedTokenError, fn ->
       tokenize(" \"this is an unfinished string ")
     end
+
     assert_raise Ex.UnfinishedTokenError, fn ->
       tokenize(" \"this is an unfinished string\\\"")
     end
@@ -70,6 +72,7 @@ defmodule Eden.LexerTest do
     assert_raise Ex.UnexpectedInputError, fn ->
       tokenize(" question?\\")
     end
+
     assert_raise Ex.UnexpectedInputError, fn ->
       tokenize("ns/name/ss")
     end
@@ -105,86 +108,109 @@ defmodule Eden.LexerTest do
     assert_raise Ex.UnexpectedInputError, fn ->
       assert tokenize("1234.a")
     end
+
     assert_raise Ex.UnexpectedInputError, fn ->
       assert tokenize("1234.121a ")
     end
+
     assert_raise Ex.UnexpectedInputError, fn ->
       assert tokenize("1234E0a1")
     end
+
     assert_raise Ex.UnfinishedTokenError, fn ->
       tokenize("1234E")
     end
+
     assert_raise Ex.UnfinishedTokenError, fn ->
       tokenize("1234.")
     end
+
     assert_raise Ex.UnfinishedTokenError, fn ->
       tokenize("1234. :kw")
     end
   end
 
   test "Delimiters" do
-    assert tokenize("{[#\{}]} )()") == [token(:curly_open, "{"),
-                                        token(:bracket_open, "["),
-                                        token(:set_open, "#\{"),
-                                        token(:curly_close, "}"),
-                                        token(:bracket_close, "]"),
-                                        token(:curly_close, "}"),
-                                        token(:paren_close, ")"),
-                                        token(:paren_open, "("),
-                                        token(:paren_close, ")")]
+    assert tokenize("{[#\{}]} )()") == [
+             token(:curly_open, "{"),
+             token(:bracket_open, "["),
+             token(:set_open, "#\{"),
+             token(:curly_close, "}"),
+             token(:bracket_close, "]"),
+             token(:curly_close, "}"),
+             token(:paren_close, ")"),
+             token(:paren_open, "("),
+             token(:paren_close, ")")
+           ]
   end
 
   test "Discard" do
     assert tokenize("#_ ") == [token(:discard, "#_")]
-    assert tokenize("1 #_ :kw") == [token(:integer, "1"),
-                                    token(:discard, "#_"),
-                                    token(:keyword, "kw")]
+
+    assert tokenize("1 #_ :kw") == [
+             token(:integer, "1"),
+             token(:discard, "#_"),
+             token(:keyword, "kw")
+           ]
   end
 
   test "Tag" do
     assert tokenize("#ns/name") == [token(:tag, "ns/name")]
     assert tokenize("#whatever") == [token(:tag, "whatever")]
-    assert tokenize(" #whatever :kw") == [token(:tag, "whatever"),
-                                          token(:keyword, "kw")]
+    assert tokenize(" #whatever :kw") == [token(:tag, "whatever"), token(:keyword, "kw")]
   end
 
   test "Comment" do
-    assert tokenize("1 ;; hello") == [token(:integer, "1"),
-                                      token(:comment, " hello")]
-    assert tokenize("1 ;; hello\n\r") == [token(:integer, "1"),
-                                          token(:comment, " hello")]
-    assert tokenize("1 ;; hello\n\r bla") == [token(:integer, "1"),
-                                              token(:comment, " hello"),
-                                              token(:symbol, "bla")]
+    assert tokenize("1 ;; hello") == [token(:integer, "1"), token(:comment, " hello")]
+    assert tokenize("1 ;; hello\n\r") == [token(:integer, "1"), token(:comment, " hello")]
+
+    assert tokenize("1 ;; hello\n\r bla") == [
+             token(:integer, "1"),
+             token(:comment, " hello"),
+             token(:symbol, "bla")
+           ]
   end
 
   test "Line and Column Information" do
-    tokens = [token(:integer, "1", %{line: 1, col: 0}),
-              token(:comment, " hello", %{line: 1, col: 2})]
+    tokens = [
+      token(:integer, "1", %{line: 1, col: 0}),
+      token(:comment, " hello", %{line: 1, col: 2})
+    ]
+
     assert tokenize("1 ;; hello", location: true) == tokens
     assert tokenize("1 ;; hello\r\n", location: true) == tokens
 
-    tokens = [token(:integer, "1", %{line: 1, col: 0}),
-              token(:comment, " hello", %{line: 1, col: 2}),
-              token(:symbol, "bla", %{line: 2, col: 1})]
+    tokens = [
+      token(:integer, "1", %{line: 1, col: 0}),
+      token(:comment, " hello", %{line: 1, col: 2}),
+      token(:symbol, "bla", %{line: 2, col: 1})
+    ]
+
     assert tokenize("1 ;; hello\r\n bla", location: true) == tokens
     assert tokenize("1 ;; hello\n\r bla", location: true) == tokens
 
-    tokens = [token(:integer, "1", %{line: 1, col: 0}),
-              token(:string, "hello \n world", %{line: 2, col: 0}),
-              token(:keyword, "kw", %{line: 3, col: 8})]
+    tokens = [
+      token(:integer, "1", %{line: 1, col: 0}),
+      token(:string, "hello \n world", %{line: 2, col: 0}),
+      token(:keyword, "kw", %{line: 3, col: 8})
+    ]
+
     assert tokenize("1 \n\"hello \n world\" :kw ", location: true) == tokens
 
-    tokens = [token(:integer, "1", %{line: 1, col: 0}),
-              token(:string, "hello \n \" world", %{line: 2, col: 0}),
-              token(:keyword, "kw", %{line: 3, col: 1})]
+    tokens = [
+      token(:integer, "1", %{line: 1, col: 0}),
+      token(:string, "hello \n \" world", %{line: 2, col: 0}),
+      token(:keyword, "kw", %{line: 3, col: 1})
+    ]
+
     assert tokenize("1 \n\"hello \\n \\\" world\"\n :kw ", location: true) == tokens
   end
 
   defp token(type, value, location \\ nil) do
     token = %Lexer.Token{type: type, value: value}
+
     if location,
-       do: Map.put(token, :location, location),
-       else: token
+      do: Map.put(token, :location, location),
+      else: token
   end
 end

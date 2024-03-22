@@ -16,7 +16,6 @@ defmodule EdenTest do
     assert_raise Ex.EmptyInputError, fn ->
       decode!("")
     end
-
   end
 
   test "Decode Literals" do
@@ -32,7 +31,7 @@ defmodule EdenTest do
     assert decode!("\\z") == %Character{char: "z"}
 
     assert decode!("a-symbol") == %Symbol{name: "a-symbol"}
-    assert decode!(":the-keyword") == :'the-keyword'
+    assert decode!(":the-keyword") == :"the-keyword"
 
     assert decode!("42") == 42
     assert decode!("42N") == 42
@@ -64,14 +63,17 @@ defmodule EdenTest do
   end
 
   test "Decode Set" do
-    set = Enum.into([:name, "John", :age, 42], MapSet.new)
+    set = Enum.into([:name, "John", :age, 42], MapSet.new())
     assert decode!("#\{:name \"John\" :age 42}") == set
   end
 
   test "Decode Tag" do
     date = Timex.parse!("1985-04-12T23:20:50.52Z", "{RFC3339z}")
     assert decode!("#inst \"1985-04-12T23:20:50.52Z\"") == date
-    assert decode!("#uuid \"f81d4fae-7dec-11d0-a765-00a0c91e6bf6\"") == %UUID{value: "f81d4fae-7dec-11d0-a765-00a0c91e6bf6"}
+
+    assert decode!("#uuid \"f81d4fae-7dec-11d0-a765-00a0c91e6bf6\"") == %UUID{
+             value: "f81d4fae-7dec-11d0-a765-00a0c91e6bf6"
+           }
 
     assert decode!("#custom/tag (1 2 3)") == %Tag{name: "custom/tag", value: [1, 2, 3]}
     handlers = %{"custom/tag" => &custom_tag_handler/1}
@@ -100,7 +102,7 @@ defmodule EdenTest do
     assert encode!(42.0e3) == "4.2e4"
     assert encode!(42.0e-3) == "0.042"
     assert encode!(42.0e-1) == "4.2"
-    assert encode!(42.01E+1) == "420.1"
+    assert encode!(42.01e+1) == "420.1"
   end
 
   test "Encode List" do
@@ -118,7 +120,7 @@ defmodule EdenTest do
   end
 
   test "Encode Set" do
-    set = Enum.into([:name, "John", :age, 42], MapSet.new)
+    set = Enum.into([:name, "John", :age, 42], MapSet.new())
     assert encode!(set) == "#\{42, :age, :name, \"John\"}"
   end
 
@@ -153,7 +155,6 @@ defmodule EdenTest do
         assert e.protocol == Eden.Encode
         assert e.value == self()
     end
-
   end
 
   defp custom_tag_handler(value) when is_list(value) do

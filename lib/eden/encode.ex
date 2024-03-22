@@ -8,43 +8,54 @@ alias Eden.Tag
 defprotocol Eden.Encode do
   @fallback_to_any true
 
-  @spec encode(any) :: String.t
+  @spec encode(any) :: String.t()
   def encode(value)
 end
 
 defmodule Eden.Encode.Utils do
-  def wrap(str, first, last )do
+  def wrap(str, first, last) do
     first <> str <> last
   end
 end
 
 defimpl Encode, for: Atom do
   def encode(atom) when atom in [nil, true, false] do
-    Atom.to_string atom
+    Atom.to_string(atom)
   end
+
   def encode(atom) do
-    ":" <> Atom.to_string atom
+    ":" <> Atom.to_string(atom)
   end
 end
 
 defimpl Encode, for: Symbol do
-  def encode(symbol) do symbol.name end
+  def encode(symbol) do
+    symbol.name
+  end
 end
 
 defimpl Encode, for: BitString do
-  def encode(string) do "\"#{string}\"" end
+  def encode(string) do
+    "\"#{string}\""
+  end
 end
 
 defimpl Encode, for: Character do
-  def encode(char) do "\\#{char.char}" end
+  def encode(char) do
+    "\\#{char.char}"
+  end
 end
 
 defimpl Encode, for: Integer do
-  def encode(int) do "#{inspect int}" end
+  def encode(int) do
+    "#{inspect(int)}"
+  end
 end
 
 defimpl Encode, for: Float do
-  def encode(float) do "#{inspect float}" end
+  def encode(float) do
+    "#{inspect(float)}"
+  end
 end
 
 defimpl Encode, for: List do
@@ -59,7 +70,7 @@ end
 defimpl Encode, for: Array do
   def encode(array) do
     array
-    |> Array.to_list
+    |> Array.to_list()
     |> Enum.map(&Encode.encode/1)
     |> Enum.join(", ")
     |> Utils.wrap("[", "]")
@@ -69,7 +80,7 @@ end
 defimpl Encode, for: Map do
   def encode(map) do
     map
-    |> Map.to_list
+    |> Map.to_list()
     |> Enum.map(fn {k, v} -> Encode.encode(k) <> " " <> Encode.encode(v) end)
     |> Enum.join(", ")
     |> Utils.wrap("{", "}")
@@ -109,7 +120,8 @@ defimpl Encode, for: Any do
   def encode(struct) when is_map(struct) do
     Encode.encode(Map.from_struct(struct))
   end
-  def encode(value)  do
+
+  def encode(value) do
     raise %Protocol.UndefinedError{protocol: Encode, value: value}
   end
 end

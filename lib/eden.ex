@@ -10,8 +10,7 @@ defmodule Eden do
   alias Eden.Decode
   alias Eden.Exception, as: Ex
 
-  @default_handlers %{"inst" => &Eden.Tag.inst/1,
-                      "uuid" => &Eden.Tag.uuid/1}
+  @default_handlers %{"inst" => &Eden.Tag.inst/1, "uuid" => &Eden.Tag.uuid/1}
 
   @doc """
   Encodes an *Elixir* term that implements the `Eden.Encode` protocol.
@@ -55,7 +54,7 @@ defmodule Eden do
       iex> Eden.encode({:a, 1})
       {:error, Protocol.UndefinedError}
   """
-  @spec encode(Encode.t) :: {:ok, String.t} | {:error, atom}
+  @spec encode(Encode.t()) :: {:ok, String.t()} | {:error, atom}
   def encode(data) do
     try do
       {:ok, encode!(data)}
@@ -70,7 +69,7 @@ defmodule Eden do
 
   Returns the function result otherwise.
   """
-  @spec encode!(Encode.t) :: String.t
+  @spec encode!(Encode.t()) :: String.t()
   def encode!(data) do
     Encode.encode(data)
   end
@@ -102,7 +101,7 @@ defmodule Eden do
       iex> Eden.decode("nil true false .")
       {:error, Eden.Exception.UnexpectedInputError}
   """
-  @spec decode(String.t, Keyword.t) :: {:ok, any} | {:error, atom}
+  @spec decode(String.t(), Keyword.t()) :: {:ok, any} | {:error, atom}
   def decode(input, opts \\ []) do
     try do
       {:ok, decode!(input, opts)}
@@ -117,11 +116,12 @@ defmodule Eden do
 
   Returns the function result otherwise.
   """
-  @spec decode!(String.t, Keyword.t) :: any
+  @spec decode!(String.t(), Keyword.t()) :: any
   def decode!(input, opts \\ []) do
     tree = parse(input, location: true)
     handlers = Map.merge(@default_handlers, opts[:handlers] || %{})
     opts = [handlers: handlers]
+
     case Decode.decode(tree, opts) do
       [] -> raise Ex.EmptyInputError, input
       [data] -> data

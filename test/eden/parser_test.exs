@@ -10,9 +10,7 @@ defmodule Eden.ParserTest do
   end
 
   test "Literals" do
-    root = node(:root, nil, [node(:nil, "nil"),
-                             node(:true, "true"),
-                             node(:false, "false")])
+    root = node(:root, nil, [node(nil, "nil"), node(true, "true"), node(false, "false")])
     assert parse("nil true false") == root
 
     root = node(:root, nil, [node(:integer, "1")])
@@ -25,25 +23,20 @@ defmodule Eden.ParserTest do
     root = node(:root, nil, [node(:float, "1.33")])
     assert parse("1.33") == root
 
-    root = node(:root, nil,
-                [node(:symbol, "nilo"),
-                 node(:symbol, "truthy"),
-                 node(:symbol, "falsey")])
+    root =
+      node(:root, nil, [node(:symbol, "nilo"), node(:symbol, "truthy"), node(:symbol, "falsey")])
+
     assert parse("nilo truthy falsey") == root
 
-    root = node(:root, nil,
-                [node(:keyword, "nilo"),
-                 node(:string, "truthy"),
-                 node(:keyword, "falsey")])
+    root =
+      node(:root, nil, [node(:keyword, "nilo"), node(:string, "truthy"), node(:keyword, "falsey")])
+
     assert parse(":nilo \"truthy\" :falsey") == root
 
-    root = node(:root, nil,
-                [node(:character, "h"),
-                 node(:character, "i")])
+    root = node(:root, nil, [node(:character, "h"), node(:character, "i")])
     assert parse("\\h\\i") == root
 
-    root = node(:root, nil,
-                [node(:string, "Thaïlande")])
+    root = node(:root, nil, [node(:string, "Thaïlande")])
     assert parse("\"Thaïlande\"") == root
 
     assert_raise Ex.UnfinishedTokenError, fn ->
@@ -59,25 +52,26 @@ defmodule Eden.ParserTest do
     root = node(:root, nil, [node(:map, nil)])
     assert parse("{}") == root
 
-    root = node(:root, nil,
-                [node(:map, nil,
-                      [node(:keyword, "name"),
-                       node(:string, "John")])])
+    root = node(:root, nil, [node(:map, nil, [node(:keyword, "name"), node(:string, "John")])])
     assert parse("{:name \"John\"}") == root
 
-    root = node(:root, nil,
-                [node(:map, nil,
-                      [node(:keyword, "name"),
-                       node(:string, "John"),
-                       node(:keyword, "age"),
-                       node(:integer, "120")])])
+    root =
+      node(:root, nil, [
+        node(:map, nil, [
+          node(:keyword, "name"),
+          node(:string, "John"),
+          node(:keyword, "age"),
+          node(:integer, "120")
+        ])
+      ])
+
     assert parse("{:name \"John\", :age 120}") == root
 
     assert_raise Ex.OddExpressionCountError, fn ->
       parse("{nil true false}")
     end
 
-     assert_raise Ex.UnbalancedDelimiterError, fn ->
+    assert_raise Ex.UnbalancedDelimiterError, fn ->
       parse("{nil true  ")
     end
   end
@@ -86,17 +80,14 @@ defmodule Eden.ParserTest do
     root = node(:root, nil, [node(:vector, nil)])
     assert parse("[]") == root
 
-    root = node(:root, nil,
-                [node(:vector, nil,
-                      [node(:keyword, "name"),
-                       node(:string, "John")])])
+    root = node(:root, nil, [node(:vector, nil, [node(:keyword, "name"), node(:string, "John")])])
     assert parse("[:name, \"John\"]") == root
 
-    root = node(:root, nil,
-                [node(:vector, nil,
-                      [node(:keyword, "name"),
-                       node(:string, "John"),
-                       node(:integer, "120")])])
+    root =
+      node(:root, nil, [
+        node(:vector, nil, [node(:keyword, "name"), node(:string, "John"), node(:integer, "120")])
+      ])
+
     assert parse("[:name, \"John\", 120]") == root
 
     assert_raise Ex.UnbalancedDelimiterError, fn ->
@@ -108,17 +99,14 @@ defmodule Eden.ParserTest do
     root = node(:root, nil, [node(:list, nil)])
     assert parse("()") == root
 
-    root = node(:root, nil,
-                [node(:list, nil,
-                      [node(:keyword, "name"),
-                       node(:string, "John")])])
+    root = node(:root, nil, [node(:list, nil, [node(:keyword, "name"), node(:string, "John")])])
     assert parse("(:name, \"John\")") == root
 
-    root = node(:root, nil,
-                [node(:list, nil,
-                      [node(:keyword, "name"),
-                       node(:string, "John"),
-                       node(:integer, "120")])])
+    root =
+      node(:root, nil, [
+        node(:list, nil, [node(:keyword, "name"), node(:string, "John"), node(:integer, "120")])
+      ])
+
     assert parse("(:name, \"John\", 120)") == root
 
     assert_raise Ex.UnbalancedDelimiterError, fn ->
@@ -130,17 +118,14 @@ defmodule Eden.ParserTest do
     root = node(:root, nil, [node(:set, nil)])
     assert parse("#\{}") == root
 
-    root = node(:root, nil,
-                [node(:set, nil,
-                      [node(:keyword, "name"),
-                       node(:string, "John")])])
+    root = node(:root, nil, [node(:set, nil, [node(:keyword, "name"), node(:string, "John")])])
     assert parse("#\{:name, \"John\"}") == root
 
-    root = node(:root, nil,
-                [node(:set, nil,
-                      [node(:keyword, "name"),
-                       node(:string, "John"),
-                       node(:integer, "120")])])
+    root =
+      node(:root, nil, [
+        node(:set, nil, [node(:keyword, "name"), node(:string, "John"), node(:integer, "120")])
+      ])
+
     assert parse("#\{:name, \"John\", 120}") == root
 
     assert_raise Ex.UnbalancedDelimiterError, fn ->
@@ -149,16 +134,14 @@ defmodule Eden.ParserTest do
   end
 
   test "Tag" do
-    root = node(:root, nil,
-                [node(:tag, "inst",
-                      [node(:string, "1985-04-12T23:20:50.52Z")])])
+    root = node(:root, nil, [node(:tag, "inst", [node(:string, "1985-04-12T23:20:50.52Z")])])
     assert parse("#inst \"1985-04-12T23:20:50.52Z\"") == root
 
-    root = node(:root, nil,
-                [node(:tag, "some/tag",
-                      [node(:map, nil,
-                            [node(:keyword, "a"),
-                             node(:integer, "1")])])])
+    root =
+      node(:root, nil, [
+        node(:tag, "some/tag", [node(:map, nil, [node(:keyword, "a"), node(:integer, "1")])])
+      ])
+
     assert parse("#some/tag {:a 1}") == root
 
     assert_raise Ex.IncompleteTagError, fn ->
@@ -167,28 +150,18 @@ defmodule Eden.ParserTest do
   end
 
   test "Discard" do
-    root = node(:root, nil,
-                [node(:set, nil,
-                      [node(:keyword, "name")])])
+    root = node(:root, nil, [node(:set, nil, [node(:keyword, "name")])])
     assert parse("#\{:name, #_ \"John\"}") == root
 
-    root = node(:root, nil,
-                [node(:set, nil,
-                      [node(:string, "John"),
-                       node(:integer, "120")])])
+    root = node(:root, nil, [node(:set, nil, [node(:string, "John"), node(:integer, "120")])])
     assert parse("#\{#_:name, \"John\", 120}") == root
   end
 
   test "Comment" do
-    root = node(:root, nil,
-                [node(:set, nil,
-                      [node(:keyword, "name")])])
+    root = node(:root, nil, [node(:set, nil, [node(:keyword, "name")])])
     assert parse("#\{:name, \n ;; \"John\" \n}") == root
 
-    root = node(:root, nil,
-                [node(:set, nil,
-                      [node(:string, "John"),
-                       node(:integer, "120")])])
+    root = node(:root, nil, [node(:set, nil, [node(:string, "John"), node(:integer, "120")])])
     assert parse("#\{\n;; :name, \n \"John\", 120}") == root
   end
 
@@ -199,9 +172,6 @@ defmodule Eden.ParserTest do
   end
 
   defp node(type, value, children \\ []) do
-    %Parser.Node{type: type,
-                 value: value,
-                 children: children,
-                 location: nil}
+    %Parser.Node{type: type, value: value, children: children, location: nil}
   end
 end

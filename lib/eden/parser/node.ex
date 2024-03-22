@@ -26,20 +26,22 @@ defmodule Eden.Parser.Node do
       value_str = if node.value, do: "\"" <> node.value <> "\" ", else: ""
 
       loc = node.location
+
       location_str =
-      if loc do
-        concat ["(", Integer.to_string(loc.line), ",",
-                Integer.to_string(loc.col), ")"]
-      else
-        ""
-      end
+        if loc do
+          concat(["(", Integer.to_string(loc.line), ",", Integer.to_string(loc.col), ")"])
+        else
+          ""
+        end
 
       level = Map.get(opts, :level, 0)
       opts = Map.put(opts, :level, level + 2)
       padding = String.duplicate(" ", level)
 
-      concat [padding, "",type_str , " ", value_str, location_str, "\n"]
-              ++ Enum.map(node.children, fn x -> to_doc(x, opts)end )
+      concat(
+        [padding, "", type_str, " ", value_str, location_str, "\n"] ++
+          Enum.map(node.children, fn x -> to_doc(x, opts) end)
+      )
     end
   end
 

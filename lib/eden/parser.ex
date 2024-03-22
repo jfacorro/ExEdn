@@ -51,9 +51,11 @@ defmodule Eden.Parser do
     tokens = Lexer.tokenize(input, opts)
     state = %{tokens: tokens, node: new_node(:root)}
     state = exprs(state)
+
     if not Enum.empty?(state.tokens) do
       raise Ex.UnexpectedTokenError, List.first(state.tokens)
     end
+
     Node.reverse_children(state.node)
   end
 
@@ -71,27 +73,30 @@ defmodule Eden.Parser do
   defp expr(%{tokens: []}) do
     nil
   end
+
   defp expr(state) do
-    terminal(state, :nil)
-    || terminal(state, :false)
-    || terminal(state, :true)
-    || terminal(state, :symbol)
-    || terminal(state, :keyword)
-    || terminal(state, :integer)
-    || terminal(state, :float)
-    || terminal(state, :string)
-    || terminal(state, :character)
-    || map_begin(state)
-    || vector_begin(state)
-    || list_begin(state)
-    || set_begin(state)
-    || tag(state)
-    || discard(state)
-    || comment(state)
+    terminal(state, nil) ||
+      terminal(state, false) ||
+      terminal(state, true) ||
+      terminal(state, :symbol) ||
+      terminal(state, :keyword) ||
+      terminal(state, :integer) ||
+      terminal(state, :float) ||
+      terminal(state, :string) ||
+      terminal(state, :character) ||
+      map_begin(state) ||
+      ns_map_begin(state) ||
+      vector_begin(state) ||
+      list_begin(state) ||
+      set_begin(state) ||
+      tag(state) ||
+      discard(state) ||
+      comment(state)
   end
 
   defp terminal(state, type) do
     {state, token} = pop_token(state)
+
     if token?(token, type) do
       node = new_node(type, token, true)
       add_node(state, node)
@@ -102,6 +107,7 @@ defmodule Eden.Parser do
 
   defp map_begin(state) do
     {state, token} = pop_token(state)
+
     if token?(token, :curly_open) do
       state
       |> set_node(new_node(:map, token))
@@ -132,16 +138,38 @@ defmodule Eden.Parser do
 
   defp map_end(state) do
     {state, token} = pop_token(state)
+
     if not token?(token, :curly_close) do
       raise Ex.UnbalancedDelimiterError, state.node
     end
+
     state
+  end
+
+  defp ns_map_begin(state) do
+    {state, token} = pop_token(state)
+
+    if token?(token, :ns_map) do
+      node = new_node(:ns_map, token, true)
+      {state, token} = pop_token(state)
+
+      if not token?(token, :curly_open) do
+        raise Ex.UnexpectedTokenError, token
+      end
+
+      state
+      |> set_node(node)
+      |> pairs
+      |> map_end
+      |> restore_node(state)
+    end
   end
 
   ## Vector
 
   defp vector_begin(state) do
     {state, token} = pop_token(state)
+
     if token?(token, :bracket_open) do
       state
       |> set_node(new_node(:vector, token))
@@ -153,9 +181,11 @@ defmodule Eden.Parser do
 
   defp vector_end(state) do
     {state, token} = pop_token(state)
+
     if not token?(token, :bracket_close) do
       raise Ex.UnbalancedDelimiterError, state.node
     end
+
     state
   end
 
@@ -163,6 +193,7 @@ defmodule Eden.Parser do
 
   defp list_begin(state) do
     {state, token} = pop_token(state)
+
     if token?(token, :paren_open) do
       state
       |> set_node(new_node(:list, token))
@@ -174,9 +205,11 @@ defmodule Eden.Parser do
 
   defp list_end(state) do
     {state, token} = pop_token(state)
+
     if not token?(token, :paren_close) do
       raise Ex.UnbalancedDelimiterError, state.node
     end
+
     state
   end
 
@@ -184,6 +217,7 @@ defmodule Eden.Parser do
 
   defp set_begin(state) do
     {state, token} = pop_token(state)
+
     if token?(token, :set_open) do
       state
       |> set_node(new_node(:set, token))
@@ -195,9 +229,11 @@ defmodule Eden.Parser do
 
   defp set_end(state) do
     {state, token} = pop_token(state)
+
     if not token?(token, :curly_close) do
       raise Ex.UnbalancedDelimiterError, state.node
     end
+
     state
   end
 
@@ -205,8 +241,10 @@ defmodule Eden.Parser do
 
   defp tag(state) do
     {state, token} = pop_token(state)
+
     if token?(token, :tag) do
       node = new_node(:tag, token, true)
+
       state
       |> set_node(node)
       |> expr
@@ -219,6 +257,7 @@ defmodule Eden.Parser do
 
   defp discard(state) do
     {state, token} = pop_token(state)
+
     if token?(token, :discard) do
       state
       |> set_node(new_node(:discard, token))
@@ -232,6 +271,7 @@ defmodule Eden.Parser do
 
   defp comment(state) do
     {state, token} = pop_token(state)
+
     if token?(token, :comment) do
       state
     end
@@ -244,16 +284,17 @@ defmodule Eden.Parser do
   ## Node
 
   defp new_node(type, token \\ nil, use_value? \\ false) do
-    location = if token && Map.has_key?(token, :location) do
-                 token.location
-               end
-    value = if token && use_value? do
-              token.value
-            end
-    %Node{type: type,
-          location: location,
-          value: value,
-          children: []}
+    location =
+      if token && Map.has_key?(token, :location) do
+        token.location
+      end
+
+    value =
+      if token && use_value? do
+        token.value
+      end
+
+    %Node{type: type, location: location, value: value, children: []}
   end
 
   defp add_node(state, node) do
@@ -269,6 +310,7 @@ defmodule Eden.Parser do
   defp restore_node(new_state, old_state, add_child? \\ true) do
     child_node = Node.reverse_children(new_state.node)
     old_state = Map.put(new_state, :node, old_state.node)
+
     if add_child? do
       add_node(old_state, child_node)
     else
@@ -279,11 +321,10 @@ defmodule Eden.Parser do
   ## Token
 
   defp token?(nil, _), do: false
-  defp token?(token, type), do: (token.type == type)
+  defp token?(token, type), do: token.type == type
 
   defp pop_token(state) do
-    {update_in(state, [:tokens], &tail/1),
-     List.first(state.tokens)}
+    {update_in(state, [:tokens], &tail/1), List.first(state.tokens)}
   end
 
   ## Utils
@@ -297,7 +338,7 @@ defmodule Eden.Parser do
   end
 
   defp raise_when(x, ex, msg, pred?) do
-    if(pred?.(x), do: (raise ex, msg), else: x)
+    if(pred?.(x), do: raise(ex, msg), else: x)
   end
 
   defp tail([]), do: []
